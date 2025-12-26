@@ -17,24 +17,33 @@
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--pink-bg);
             font-family: 'Pacifico', cursive;
-            overflow: hidden;
+            overflow: hidden; /* Chống cuộn trang trên mobile */
             display: flex; align-items: center; justify-content: center;
             -webkit-tap-highlight-color: transparent;
         }
 
         #app {
-            position: relative; width: 100%; max-width: 500px;
-            height: 100dvh; display: flex; flex-direction: column;
+            position: relative; 
+            width: 100%; 
+            max-width: 500px; 
+            height: 100dvh; 
+            display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center;
             padding: 20px; box-sizing: border-box;
         }
 
+        /* Question Area */
         #question-area { z-index: 100; width: 100%; transition: opacity 0.5s; }
-        h1 { color: var(--text-color); font-size: clamp(1.5rem, 5vw, 2rem); margin-bottom: 20px; }
+        h1 { 
+            color: var(--text-color); 
+            font-size: clamp(1.5rem, 6vw, 2.2rem); 
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 0px white;
+        }
 
         .btn-group {
             display: flex; gap: 20px; justify-content: center;
-            align-items: center; position: relative; height: 150px;
+            align-items: center; position: relative; height: 200px;
         }
 
         .pill-btn {
@@ -43,13 +52,17 @@
             cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 4px 15px rgba(216, 112, 147, 0.3);
             white-space: nowrap;
+            user-select: none;
         }
 
-        #btn-yes { background-color: var(--btn-yes); color: white; z-index: 10; }
-        #btn-no { background-color: var(--btn-NO); color: white; z-index: 20; }
+        #btn-yes { background-color: var(--btn-yes); color: white; z-index: 100; }
+        #btn-no { background-color: var(--btn-NO); color: white; z-index: 50; }
 
+        /* Media Area */
         .content-box {
-            position: relative; width: 100%; max-width: 400px; aspect-ratio: 1/1;
+            position: relative; width: 100%; 
+            max-width: 350px;
+            aspect-ratio: 1/1;
             display: flex; align-items: center; justify-content: center;
         }
 
@@ -58,30 +71,47 @@
             border-radius: 15px; display: none; cursor: pointer;
         }
 
+        /* Instruction - Căn giữa chuẩn PC/Mobile */
         #instruction {
-            position: absolute; top: -90px; width: 140%; left: -20%;
-            color: var(--text-color); font-size: clamp(1rem, 4vw, 1.3rem);
+            position: absolute; 
+            top: -60px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            color: var(--text-color); 
+            font-size: clamp(1.1rem, 4.5vw, 1.4rem);
             opacity: 0; transition: opacity 0.8s ease;
-            z-index: 80; display: flex; flex-direction: column;
+            z-index: 80;
             pointer-events: none;
+            white-space: nowrap;
         }
 
+        /* Envelope */
         #envelope {
-            position: absolute; width: 70%; max-width: 300px; z-index: 50;
-            top: 33.3%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            position: absolute; 
+            width: 70%; 
+            max-width: 250px;
+            z-index: 150;
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%) scale(0);
             display: none; cursor: pointer;
         }
 
+        /* Final Card */
         #final-card {
-            position: fixed; width: 100%; max-width: 500px;
-            z-index: 100; display: none;
+            position: fixed; 
+            width: 85%; 
+            max-width: 400px;
+            z-index: 200; display: none;
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
-            left: 50%; top: 50%; transform: translate(-50%, -50%);
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
         }
 
+        /* Animations */
         @keyframes bounceIn {
             0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            60% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            60% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
         @keyframes gentleShake {
@@ -91,7 +121,10 @@
         }
         .animate-bounce { animation: bounceIn 0.8s forwards, gentleShake 2s infinite 0.8s; }
 
-        .confetti { position: fixed; width: 10px; height: 10px; z-index: 99; pointer-events: none; }
+        .confetti {
+            position: fixed; width: 8px; height: 8px;
+            z-index: 190; pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -128,19 +161,9 @@
         const finalCard = document.getElementById('final-card');
         const music = document.getElementById('bg-music');
 
-        // --- CƠ CHẾ KHẮC PHỤC LỖI CACHE ---
-        // Tải trước tất cả tài nguyên ngay khi trang vừa load
-        const filesToCache = [
-            "paw-sitive-nhung-1.gif",
-            "paw-sitive-nhung-3.gif",
-            "envelope-closed-1.png",
-            "paw-sitive-hbd-nhung-1.png"
-        ];
-
-        filesToCache.forEach(file => {
-            const img = new Image();
-            img.src = file; 
-            // Điều này ép trình duyệt tải file về bộ nhớ đệm ngay lập tức
+        // Preload resources
+        ["paw-sitive-nhung-3.gif", "envelope-closed-1.png", "paw-sitive-hbd-nhung-1.png"].forEach(src => {
+            const img = new Image(); img.src = src;
         });
 
         let bigScale = 1;
@@ -148,36 +171,42 @@
         function handleYes() {
             bigScale += 0.6;
             btnNo.style.transform = `scale(${bigScale})`;
-            if (bigScale > 3.5) {
-                btnYes.style.opacity = '0';
-                btnYes.style.pointerEvents = 'none';
+            
+            // Khi nút NO quá to, cho phép bấm xuyên qua nó để chạm được nút YES bên dưới
+            if (bigScale > 2.5) {
+                btnNo.style.pointerEvents = 'none';
+            }
+            
+            if (bigScale > 5) {
+                btnYes.style.opacity = '0.5';
             }
         }
 
         function handleNo() {
-            // Khởi động nhạc ngay lập tức
-            music.play().catch(e => console.log("Yêu cầu tương tác để phát nhạc"));
-            
+            // Cố gắng phát nhạc ngay khi tương tác (quan trọng cho iOS)
+            music.play().catch(() => {
+                console.log("Audio play prevented. Waiting for next touch.");
+            });
+
             questionArea.style.opacity = '0';
             setTimeout(() => {
                 questionArea.style.display = 'none';
                 gifDisplay.style.display = 'block';
-                setTimeout(() => { instruction.style.opacity = '1'; }, 500);
+                setTimeout(() => { 
+                    instruction.style.opacity = '1'; 
+                }, 500);
             }, 500);
             gifDisplay.onclick = triggerEnvelope;
         }
 
         function triggerEnvelope() {
             gifDisplay.onclick = null;
-            // Đổi sang GIF 2 (đã được cache trước đó)
-            gifDisplay.src = "paw-sitive-nhung-2.gif";
-            
+            gifDisplay.src = "paw-sitive-nhung-3.gif";
             instruction.style.opacity = '0';
             setTimeout(() => {
                 instruction.textContent = "Tiếp tục ấn mở thư";
                 instruction.style.opacity = '1';
             }, 600);
-
             envelope.style.display = 'block';
             envelope.classList.add('animate-bounce');
         }
@@ -185,16 +214,14 @@
         function openGift() {
             envelope.style.display = 'none';
             finalCard.style.display = 'block';
-            
             instruction.style.opacity = '0';
             setTimeout(() => {
                 instruction.innerHTML = `
                     <div style="text-align: center; width: 100%;">Chúc mừng sinh nhật Trang Nhung Vũ!!</div>
-                    <div style="text-align: right; width: 100%; font-size: 0.85em; margin-top: 3px; padding-right: 15%;">-From: Paw-sitive Chats.</div>
+                    <div style="text-align: right; width: 100%; font-size: 0.75em; margin-top: 5px; padding-right: 5%; color: #d87093;">- From: Paw-sitive Chats -</div>
                 `;
                 instruction.style.opacity = '1';
             }, 600);
-            
             startContinuousConfetti();
         }
 
@@ -204,6 +231,7 @@
                 for(let i = 0; i < 2; i++) {
                     const conf = document.createElement('div');
                     conf.className = 'confetti';
+                    conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
                     conf.style.left = Math.random() * 100 + 'vw';
                     conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                     document.body.appendChild(conf);
@@ -216,10 +244,10 @@
 
                     setTimeout(() => conf.remove(), duration * 1000);
                 }
-            }, 100);
+            }, 150);
         }
 
-        // Đảm bảo nhạc phát trên iPhone khi có tương tác đầu tiên
+        // Đảm bảo nhạc phát trên iPhone khi user chạm bất kỳ đâu sau khi đã bắt đầu
         document.body.addEventListener('touchstart', () => {
             if (music.paused && questionArea.style.display === 'none') {
                 music.play();
