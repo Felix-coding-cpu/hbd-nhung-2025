@@ -1,7 +1,248 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <meta charset="UTF-8"><!DOCTYPE html>
+<html lang="vi">
+<head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bất ngờ cho Nhung!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pink-bg: #ffe4e1;
+            --btn-yes: #ffb6c1;
+            --btn-NO: #ff8fa3;
+            --text-color: #d87093;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--pink-bg);
+            font-family: 'Pacifico', cursive;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Container chính: Luôn ở giữa trên PC và chiếm full trên Mobile */
+        #app {
+            position: relative; 
+            width: 100%; 
+            max-width: 500px; /* Giới hạn độ rộng trên PC để không bị loãng */
+            height: 100dvh; /* Dynamic viewport height cho di động */
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            padding: 20px; box-sizing: border-box;
+        }
+
+        /* Question Area */
+        #question-area { z-index: 100; width: 100%; transition: opacity 0.5s; }
+        h1 { 
+            color: var(--text-color); 
+            font-size: clamp(1.5rem, 5vw, 2rem); /* Tự co giãn font chữ */
+            margin-bottom: 20px; 
+        }
+
+        .btn-group {
+            display: flex; gap: 20px; justify-content: center;
+            align-items: center; position: relative; height: 150px;
+        }
+
+        .pill-btn {
+            padding: 15px 40px; border: none; border-radius: 50px;
+            font-family: 'Pacifico', cursive; font-size: 1.2rem;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(216, 112, 147, 0.3);
+            white-space: nowrap;
+        }
+
+        #btn-yes { background-color: var(--btn-yes); color: white; z-index: 10; }
+        #btn-no { background-color: var(--btn-NO); color: white; z-index: 20; }
+
+        /* Media Area */
+        .content-box {
+            position: relative; width: 100%; 
+            max-width: 400px; /* Giữ ảnh vừa vặn */
+            aspect-ratio: 1/1;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .main-gif {
+            width: 100%; height: 100%; object-fit: contain;
+            border-radius: 15px; display: none; cursor: pointer;
+        }
+
+        /* Instruction: Đảm bảo không bị vỡ dòng trên PC */
+        #instruction {
+            position: absolute; 
+            top: -90px; /* Đẩy lên trên GIF */
+            width: 140%; left: -20%; /* Nới rộng vùng chứa text cho PC */
+            color: var(--text-color); 
+            font-size: clamp(1rem, 4vw, 1.3rem);
+            opacity: 0; transition: opacity 0.8s ease;
+            z-index: 80;
+            display: flex; flex-direction: column;
+            pointer-events: none;
+        }
+
+        /* Envelope: Tự scale theo màn hình */
+        #envelope {
+            position: absolute; 
+            width: 70%; 
+            max-width: 300px;
+            z-index: 50;
+            top: 33.3%; left: 50%; 
+            transform: translate(-50%, -50%) scale(0);
+            display: none; cursor: pointer;
+        }
+
+        /* Final Card: To hơn trên PC và vừa trên Mobile */
+        #final-card {
+            position: fixed; 
+            width: 90%; 
+            max-width: 450px;
+            z-index: 100; display: none;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Animations */
+        @keyframes bounceIn {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            60% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes gentleShake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0); }
+            25% { transform: translate(-50%, -50%) rotate(2deg); }
+            75% { transform: translate(-50%, -50%) rotate(-2deg); }
+        }
+        .animate-bounce { animation: bounceIn 0.8s forwards, gentleShake 2s infinite 0.8s; }
+
+        .confetti {
+            position: fixed; width: 10px; height: 10px;
+            z-index: 99; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="hbd-piano-fun.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="app">
+        <div id="question-area">
+            <h1>Em có muốn bất ngờ không?</h1>
+            <div class="btn-group">
+                <button class="pill-btn" id="btn-yes" onclick="handleYes()">YES</button>
+                <button class="pill-btn" id="btn-no" onclick="handleNo()">NO!!</button>
+            </div>
+        </div>
+
+        <div class="content-box">
+            <div id="instruction">Bị lừa rồi :v Ấn vào thư đi</div>
+            <img id="gif-display" class="main-gif" src="paw-sitive-nhung-1.gif">
+            <img id="envelope" src="envelope-closed-1.png" onclick="openGift()">
+        </div>
+
+        <img id="final-card" src="paw-sitive-hbd-nhung-1.png">
+    </div>
+
+    <script>
+        const btnYes = document.getElementById('btn-yes');
+        const btnNo = document.getElementById('btn-no');
+        const questionArea = document.getElementById('question-area');
+        const gifDisplay = document.getElementById('gif-display');
+        const instruction = document.getElementById('instruction');
+        const envelope = document.getElementById('envelope');
+        const finalCard = document.getElementById('final-card');
+        const music = document.getElementById('bg-music');
+
+        // Preload resources
+        ["paw-sitive-nhung-3.gif", "envelope-closed-1.png", "paw-sitive-hbd-nhung-1.png"].forEach(src => {
+            const img = new Image(); img.src = src;
+        });
+
+        let bigScale = 1;
+
+        function handleYes() {
+            bigScale += 0.6;
+            btnNo.style.transform = `scale(${bigScale})`;
+            if (bigScale > 3.5) {
+                btnYes.style.opacity = '0';
+                btnYes.style.pointerEvents = 'none';
+            }
+        }
+
+        function handleNo() {
+            music.play().catch(() => {});
+            questionArea.style.opacity = '0';
+            setTimeout(() => {
+                questionArea.style.display = 'none';
+                gifDisplay.style.display = 'block';
+                setTimeout(() => { instruction.style.opacity = '1'; }, 500);
+            }, 500);
+            gifDisplay.onclick = triggerEnvelope;
+        }
+
+        function triggerEnvelope() {
+            gifDisplay.onclick = null;
+            gifDisplay.src = "paw-sitive-nhung-3.gif";
+            instruction.style.opacity = '0';
+            setTimeout(() => {
+                instruction.textContent = "Tiếp tục ấn mở thư";
+                instruction.style.opacity = '1';
+            }, 600);
+            envelope.style.display = 'block';
+            envelope.classList.add('animate-bounce');
+        }
+
+        function openGift() {
+            envelope.style.display = 'none';
+            finalCard.style.display = 'block';
+            instruction.style.opacity = '0';
+            setTimeout(() => {
+                instruction.innerHTML = `
+                    <div style="text-align: center; width: 100%;">Chúc mừng sinh nhật Trang Nhung Vũ!!</div>
+                    <div style="text-align: right; width: 100%; font-size: 0.85em; margin-top: 3px; padding-right: 15%;">-From: Paw-sitive Chats</div>
+                `;
+                instruction.style.opacity = '1';
+            }, 600);
+            startContinuousConfetti();
+        }
+
+        function startContinuousConfetti() {
+            const colors = ['#ffb6c1', '#ff69b4', '#ff1493', '#fff0f5', '#db7093', '#ffd700', '#ffffff'];
+            setInterval(() => {
+                for(let i = 0; i < 2; i++) {
+                    const conf = document.createElement('div');
+                    conf.className = 'confetti';
+                    conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                    conf.style.left = Math.random() * 100 + 'vw';
+                    conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    document.body.appendChild(conf);
+
+                    const duration = Math.random() * 3 + 3;
+                    conf.animate([
+                        { top: '-20px', transform: `rotate(0deg)`, opacity: 1 },
+                        { top: '105vh', transform: `translateX(${(Math.random()-0.5)*200}px) rotate(720deg)`, opacity: 0.3 }
+                    ], { duration: duration * 1000, easing: 'ease-in' });
+
+                    setTimeout(() => conf.remove(), duration * 1000);
+                }
+            }, 100);
+        }
+
+        // Fix iPhone music
+        document.body.addEventListener('touchstart', () => {
+            if (music.paused && questionArea.style.display === 'none') music.play();
+        }, {once: false});
+    </script>
+</body>
+</html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Bất ngờ cho Nhung!</title>
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
@@ -256,3 +497,4 @@
     </script>
 </body>
 </html>
+
