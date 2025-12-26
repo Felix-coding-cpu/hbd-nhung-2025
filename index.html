@@ -78,26 +78,33 @@
             display: none; cursor: pointer;
         }
 
-        /* FIX LỖI HIỂN THỊ TRÊN IPHONE: Căn giữa tuyệt đối và giới hạn chiều cao */
         #final-card {
-            position: fixed; 
-            width: 90%; 
-            max-width: 420px;
-            max-height: 75vh; /* Giới hạn để không bị tràn lề dưới */
-            object-fit: contain;
-            z-index: 100; display: none;
+            position: fixed; width: 90%; max-width: 420px; max-height: 75vh;
+            object-fit: contain; z-index: 100; display: none;
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
-            left: 50%; 
-            top: 50%; /* Đưa về chính giữa màn hình */
-            transform: translate(-50%, -50%);
+            left: 50%; top: 50%; transform: translate(-50%, -50%);
         }
 
+        /* Hiệu ứng xuất hiện */
         @keyframes bounceIn {
             0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
             60% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
-        .animate-bounce { animation: bounceIn 0.8s forwards; }
+
+        /* HIỆU ỨNG LẮC NHẸ CHO PHONG THƯ */
+        @keyframes gentleShake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            20% { transform: translate(-50%, -50%) rotate(3deg); }
+            40% { transform: translate(-50%, -50%) rotate(-3deg); }
+            60% { transform: translate(-50%, -50%) rotate(2deg); }
+            80% { transform: translate(-50%, -50%) rotate(-2deg); }
+        }
+
+        /* Kết hợp cả 2 hiệu ứng: Bounce in xong rồi Lắc liên tục */
+        .animate-envelope { 
+            animation: bounceIn 0.8s forwards, gentleShake 2s infinite 0.8s; 
+        }
 
         .confetti { position: fixed; width: 10px; height: 10px; z-index: 99; pointer-events: none; }
     </style>
@@ -138,11 +145,10 @@
             music: document.getElementById('bg-music')
         };
 
-        // Preload tối ưu: Khởi tạo cache ngay khi trang load
+        // Preload tài nguyên trong cache
         window.addEventListener('load', () => {
             ["paw-sitive-nhung-3.gif", "envelope-closed-1.png", "paw-sitive-hbd-nhung-1.png"].forEach(f => {
-                const i = new Image();
-                i.src = f;
+                const i = new Image(); i.src = f;
             });
         });
 
@@ -170,17 +176,14 @@
 
         function triggerEnvelope() {
             elements.gif.onclick = null;
-            // Xử lý đổi GIF mượt mà: Đổi src ngay lập tức vì đã được preload
             elements.gif.src = "paw-sitive-nhung-3.gif";
-            
             elements.ins.style.opacity = '0';
             setTimeout(() => {
                 elements.ins.textContent = "Tiếp tục ấn mở thư";
                 elements.ins.style.opacity = '1';
             }, 500);
-            
             elements.env.style.display = 'block';
-            elements.env.classList.add('animate-bounce');
+            elements.env.classList.add('animate-envelope');
         }
 
         function openGift() {
@@ -215,7 +218,6 @@
             setInterval(create, 150);
         }
 
-        // Tương tác chạm để kích hoạt nhạc trên iPhone (Safari policy)
         document.body.addEventListener('touchstart', () => {
             if (elements.music.paused && elements.qArea.style.display === 'none') elements.music.play();
         }, {once: false});
