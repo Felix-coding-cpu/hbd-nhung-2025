@@ -6,6 +6,7 @@
     <title>Bất ngờ cho Nhung!</title>
     
     <link rel="preload" href="paw-sitive-nhung-1.gif" as="image">
+    <link rel="preload" href="paw-sitive-nhung-3.gif" as="image">
     <link rel="preload" href="hbd-piano-fun.mp3" as="audio">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 
@@ -31,7 +32,7 @@
             height: 100dvh; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center;
             padding: 20px; box-sizing: border-box;
-            contain: content; /* Tối ưu hóa render cho trình duyệt */
+            contain: content;
         }
 
         #question-area { z-index: 100; width: 100%; transition: opacity 0.4s ease-out; }
@@ -47,7 +48,7 @@
             font-family: 'Pacifico', cursive; font-size: 1.1rem;
             cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 4px 15px rgba(216, 112, 147, 0.3);
-            will-change: transform; /* Tối ưu GPU cho iPhone khi nút to dần */
+            will-change: transform;
         }
 
         #btn-yes { background-color: var(--btn-yes); color: white; z-index: 10; }
@@ -77,16 +78,23 @@
             display: none; cursor: pointer;
         }
 
+        /* FIX LỖI HIỂN THỊ TRÊN IPHONE: Căn giữa tuyệt đối và giới hạn chiều cao */
         #final-card {
-            position: fixed; width: 95%; max-width: 420px;
+            position: fixed; 
+            width: 90%; 
+            max-width: 420px;
+            max-height: 75vh; /* Giới hạn để không bị tràn lề dưới */
+            object-fit: contain;
             z-index: 100; display: none;
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
-            left: 50%; top: 55%; transform: translate(-50%, -50%);
+            left: 50%; 
+            top: 50%; /* Đưa về chính giữa màn hình */
+            transform: translate(-50%, -50%);
         }
 
         @keyframes bounceIn {
             0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            60% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            60% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
         .animate-bounce { animation: bounceIn 0.8s forwards; }
@@ -130,10 +138,11 @@
             music: document.getElementById('bg-music')
         };
 
-        // Preload các ảnh tiếp theo ngay khi trang web đã sẵn sàng (background tasks)
+        // Preload tối ưu: Khởi tạo cache ngay khi trang load
         window.addEventListener('load', () => {
             ["paw-sitive-nhung-3.gif", "envelope-closed-1.png", "paw-sitive-hbd-nhung-1.png"].forEach(f => {
-                const i = new Image(); i.src = f;
+                const i = new Image();
+                i.src = f;
             });
         });
 
@@ -161,12 +170,15 @@
 
         function triggerEnvelope() {
             elements.gif.onclick = null;
+            // Xử lý đổi GIF mượt mà: Đổi src ngay lập tức vì đã được preload
             elements.gif.src = "paw-sitive-nhung-3.gif";
+            
             elements.ins.style.opacity = '0';
             setTimeout(() => {
                 elements.ins.textContent = "Tiếp tục ấn mở thư";
                 elements.ins.style.opacity = '1';
             }, 500);
+            
             elements.env.style.display = 'block';
             elements.env.classList.add('animate-bounce');
         }
@@ -178,7 +190,7 @@
             setTimeout(() => {
                 elements.ins.innerHTML = `
                     <div style="text-align: center; width: 100%;">Chúc mừng sinh nhật Trang Nhung Vũ!!</div>
-                    <div style="text-align: right; width: 100%; font-size: 0.8em; margin-top: 3px; padding-right: 5px;">-From: Paw-sitive Chats.</div>
+                    <div style="text-align: right; width: 100%; font-size: 0.8em; margin-top: 5px; padding-right: 5px;">-From: Paw-sitive Chats.</div>
                 `;
                 elements.ins.style.opacity = '1';
             }, 500);
@@ -203,13 +215,10 @@
             setInterval(create, 150);
         }
 
+        // Tương tác chạm để kích hoạt nhạc trên iPhone (Safari policy)
         document.body.addEventListener('touchstart', () => {
             if (elements.music.paused && elements.qArea.style.display === 'none') elements.music.play();
         }, {once: false});
     </script>
 </body>
 </html>
-
-
-
-
