@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Bất ngờ cho Nhung!</title>
+    
+    <link rel="preload" href="paw-sitive-nhung-1.gif" as="image">
+    <link rel="preload" href="hbd-piano-fun.mp3" as="audio">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --pink-bg: #ffe4e1;
@@ -27,9 +31,10 @@
             height: 100dvh; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center;
             padding: 20px; box-sizing: border-box;
+            contain: content; /* Tối ưu hóa render cho trình duyệt */
         }
 
-        #question-area { z-index: 100; width: 100%; transition: opacity 0.5s; }
+        #question-area { z-index: 100; width: 100%; transition: opacity 0.4s ease-out; }
         h1 { color: var(--text-color); font-size: clamp(1.4rem, 5vw, 1.8rem); margin-bottom: 20px; }
 
         .btn-group {
@@ -40,9 +45,9 @@
         .pill-btn {
             padding: 12px 35px; border: none; border-radius: 50px;
             font-family: 'Pacifico', cursive; font-size: 1.1rem;
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 4px 15px rgba(216, 112, 147, 0.3);
-            white-space: nowrap;
+            will-change: transform; /* Tối ưu GPU cho iPhone khi nút to dần */
         }
 
         #btn-yes { background-color: var(--btn-yes); color: white; z-index: 10; }
@@ -58,19 +63,12 @@
             border-radius: 15px; display: none; cursor: pointer;
         }
 
-        /* Tối ưu vùng chứa hướng dẫn để không tràn màn hình iPhone */
         #instruction {
-            position: absolute; 
-            top: -100px; /* Đẩy cao hơn một chút để đủ chỗ cho 2 dòng */
-            width: 94%; 
-            left: 3%;
-            color: var(--text-color); 
-            font-size: clamp(0.95rem, 4.5vw, 1.2rem);
-            opacity: 0; transition: opacity 0.8s ease;
-            z-index: 80; 
-            display: flex; flex-direction: column;
+            position: absolute; top: -100px; width: 94%; left: 3%;
+            color: var(--text-color); font-size: clamp(0.95rem, 4.5vw, 1.2rem);
+            opacity: 0; transition: opacity 0.6s ease;
+            z-index: 80; display: flex; flex-direction: column;
             pointer-events: none;
-            box-sizing: border-box;
         }
 
         #envelope {
@@ -80,7 +78,7 @@
         }
 
         #final-card {
-            position: fixed; width: 90%; max-width: 450px;
+            position: fixed; width: 88%; max-width: 420px;
             z-index: 100; display: none;
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
             left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -91,12 +89,7 @@
             60% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
-        @keyframes gentleShake {
-            0%, 100% { transform: translate(-50%, -50%) rotate(0); }
-            25% { transform: translate(-50%, -50%) rotate(2deg); }
-            75% { transform: translate(-50%, -50%) rotate(-2deg); }
-        }
-        .animate-bounce { animation: bounceIn 0.8s forwards, gentleShake 2s infinite 0.8s; }
+        .animate-bounce { animation: bounceIn 0.8s forwards; }
 
         .confetti { position: fixed; width: 10px; height: 10px; z-index: 99; pointer-events: none; }
     </style>
@@ -118,100 +111,101 @@
 
         <div class="content-box">
             <div id="instruction">Bị lừa rồi :v Ấn vào thư đi</div>
-            <img id="gif-display" class="main-gif" src="paw-sitive-nhung-1.gif">
-            <img id="envelope" src="envelope-closed-1.png" onclick="openGift()">
+            <img id="gif-display" class="main-gif" src="paw-sitive-nhung-1.gif" alt="">
+            <img id="envelope" src="envelope-closed-1.png" onclick="openGift()" alt="">
         </div>
 
-        <img id="final-card" src="paw-sitive-hbd-nhung-1.png">
+        <img id="final-card" src="paw-sitive-hbd-nhung-1.png" alt="">
     </div>
 
     <script>
-        const btnYes = document.getElementById('btn-yes');
-        const btnNo = document.getElementById('btn-no');
-        const questionArea = document.getElementById('question-area');
-        const gifDisplay = document.getElementById('gif-display');
-        const instruction = document.getElementById('instruction');
-        const envelope = document.getElementById('envelope');
-        const finalCard = document.getElementById('final-card');
-        const music = document.getElementById('bg-music');
+        const elements = {
+            btnYes: document.getElementById('btn-yes'),
+            btnNo: document.getElementById('btn-no'),
+            qArea: document.getElementById('question-area'),
+            gif: document.getElementById('gif-display'),
+            ins: document.getElementById('instruction'),
+            env: document.getElementById('envelope'),
+            final: document.getElementById('final-card'),
+            music: document.getElementById('bg-music')
+        };
 
-        // Preload chống lỗi content unavailable
-        ["paw-sitive-nhung-1.gif", "paw-sitive-nhung-3.gif", "envelope-closed-1.png", "paw-sitive-hbd-nhung-1.png"].forEach(file => {
-            const img = new Image(); img.src = file;
+        // Preload các ảnh tiếp theo ngay khi trang web đã sẵn sàng (background tasks)
+        window.addEventListener('load', () => {
+            ["paw-sitive-nhung-3.gif", "envelope-closed-1.png", "paw-sitive-hbd-nhung-1.png"].forEach(f => {
+                const i = new Image(); i.src = f;
+            });
         });
 
         let bigScale = 1;
 
         function handleYes() {
             bigScale += 0.6;
-            btnNo.style.transform = `scale(${bigScale})`;
+            elements.btnNo.style.transform = `scale(${bigScale})`;
             if (bigScale > 3.5) {
-                btnYes.style.opacity = '0';
-                btnYes.style.pointerEvents = 'none';
+                elements.btnYes.style.opacity = '0';
+                elements.btnYes.style.pointerEvents = 'none';
             }
         }
 
         function handleNo() {
-            music.play().catch(() => {});
-            questionArea.style.opacity = '0';
+            elements.music.play().catch(() => {});
+            elements.qArea.style.opacity = '0';
             setTimeout(() => {
-                questionArea.style.display = 'none';
-                gifDisplay.style.display = 'block';
-                setTimeout(() => { instruction.style.opacity = '1'; }, 500);
-            }, 500);
-            gifDisplay.onclick = triggerEnvelope;
+                elements.qArea.style.display = 'none';
+                elements.gif.style.display = 'block';
+                setTimeout(() => { elements.ins.style.opacity = '1'; }, 100);
+            }, 400);
+            elements.gif.onclick = triggerEnvelope;
         }
 
         function triggerEnvelope() {
-            gifDisplay.onclick = null;
-            gifDisplay.src = "paw-sitive-nhung-3.gif";
-            instruction.style.opacity = '0';
+            elements.gif.onclick = null;
+            elements.gif.src = "paw-sitive-nhung-3.gif";
+            elements.ins.style.opacity = '0';
             setTimeout(() => {
-                instruction.textContent = "Tiếp tục ấn mở thư";
-                instruction.style.opacity = '1';
-            }, 600);
-            envelope.style.display = 'block';
-            envelope.classList.add('animate-bounce');
+                elements.ins.textContent = "Tiếp tục ấn mở thư";
+                elements.ins.style.opacity = '1';
+            }, 500);
+            elements.env.style.display = 'block';
+            elements.env.classList.add('animate-bounce');
         }
 
         function openGift() {
-            envelope.style.display = 'none';
-            finalCard.style.display = 'block';
-            instruction.style.opacity = '0';
+            elements.env.style.display = 'none';
+            elements.final.style.display = 'block';
+            elements.ins.style.opacity = '0';
             setTimeout(() => {
-                // Sửa lỗi hiển thị: Căn chỉnh dòng cuối gọn gàng hơn
-                instruction.innerHTML = `
-                    <div style="text-align: center; width: 100%; white-space: normal;">Chúc mừng sinh nhật Trang Nhung Vũ!!</div>
-                    <div style="text-align: right; width: 100%; font-size: 0.8em; margin-top: 3px; padding-right: 5px; box-sizing: border-box;">-From: Paw-sitive Chats.</div>
+                elements.ins.innerHTML = `
+                    <div style="text-align: center; width: 100%;">Chúc mừng sinh nhật Trang Nhung Vũ!!</div>
+                    <div style="text-align: right; width: 100%; font-size: 0.8em; margin-top: 3px; padding-right: 5px;">-From: Paw-sitive Chats.</div>
                 `;
-                instruction.style.opacity = '1';
-            }, 600);
-            startContinuousConfetti();
+                elements.ins.style.opacity = '1';
+            }, 500);
+            startConfetti();
         }
 
-        function startContinuousConfetti() {
-            const colors = ['#ffb6c1', '#ff69b4', '#ff1493', '#fff0f5', '#db7093', '#ffd700', '#ffffff'];
-            setInterval(() => {
-                for(let i = 0; i < 2; i++) {
-                    const conf = document.createElement('div');
-                    conf.className = 'confetti';
-                    conf.style.left = Math.random() * 100 + 'vw';
-                    conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    document.body.appendChild(conf);
-                    const duration = Math.random() * 3 + 3;
-                    conf.animate([
-                        { top: '-20px', transform: `rotate(0deg)`, opacity: 1 },
-                        { top: '105vh', transform: `translateX(${(Math.random()-0.5)*200}px) rotate(720deg)`, opacity: 0.3 }
-                    ], { duration: duration * 1000, easing: 'ease-in' });
-                    setTimeout(() => conf.remove(), duration * 1000);
-                }
-            }, 100);
+        function startConfetti() {
+            const colors = ['#ffb6c1', '#ff69b4', '#ff1493', '#ffd700', '#ffffff'];
+            const create = () => {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                document.body.appendChild(conf);
+                const d = Math.random() * 3 + 2;
+                conf.animate([
+                    { top: '-20px', opacity: 1 },
+                    { top: '105vh', transform: `translateX(${(Math.random()-0.5)*150}px) rotate(360deg)`, opacity: 0 }
+                ], { duration: d * 1000, easing: 'linear' });
+                setTimeout(() => conf.remove(), d * 1000);
+            };
+            setInterval(create, 150);
         }
 
         document.body.addEventListener('touchstart', () => {
-            if (music.paused && questionArea.style.display === 'none') music.play();
+            if (elements.music.paused && elements.qArea.style.display === 'none') elements.music.play();
         }, {once: false});
     </script>
 </body>
 </html>
-
